@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Azure.Functions.Worker.Extensions.Sql;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Net;
+using Newtonsoft.Json;
 
 namespace My.Functions
 {
@@ -24,11 +25,12 @@ namespace My.Functions
             var logger = executionContext.GetLogger("AddRow");
             logger.LogInformation("C# HTTP trigger function processed a request.");
             
-            var message = "Welcome to Azure Functions!";
+            var message = await req.ReadAsStringAsync();
+            //Deserialize
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-            await response.WriteStringAsync(message);
+            await response.WriteStringAsync("Success");
 
             // Return a response to both HTTP trigger and Azure SQL output binding.
             return new OutputType()
@@ -44,20 +46,39 @@ namespace My.Functions
             };
         }
     }
+
+    public static class GetItems
+    {
+        [Function("GetItems")]
+        public static IActionResult Run(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "getitems")]
+            HttpRequest req,
+            [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[ToDo]",
+                commandType: System.Data.CommandType.Text,
+                parameters: "",
+                connectionStringSetting: "SqlConnectionString")]
+            IEnumerable<ToDoItem> toDoItem)
+        {
+            return new OkObjectResult(toDoItem);
+        }
+    }
+
+    public class ToDoItem
+    {
+        public Guid Id { get; set; }
+        public int? order { get; set; }
+        public string title { get; set; }
+        public string url { get; set; }
+        public bool? completed { get; set; }
+    }
+
+    public class OutputType
+    {
+        [SqlOutput("dbo.ToDo", connectionStringSetting: "SqlConnectionString")]
+        public ToDoItem ToDoItem { get; set; }
+        public HttpResponseData HttpResponse { get; set; }
+    }
 }
 
-public class ToDoItem
-{
-    public Guid Id { get; set; }
-    public int? order { get; set; }
-    public string title { get; set; }
-    public string url { get; set; }
-    public bool? completed { get; set; }
-}
 
-public class OutputType
-{
-    [SqlOutput("dbo.ToDo", connectionStringSetting: "SqlConnectionString")]
-    public ToDoItem ToDoItem { get; set; }
-    public HttpResponseData HttpResponse { get; set; }
-}
+
