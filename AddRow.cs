@@ -18,8 +18,9 @@ namespace My.Functions
             _logger = logger;
         }
 
+        //Set value
         [Function("AddRow")]
-        public async Task<OutputType> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequestData req,
+        public async Task<OutputType> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route="AddRow")] HttpRequestData req,
     FunctionContext executionContext)
         {
             var logger = executionContext.GetLogger("AddRow");
@@ -27,6 +28,9 @@ namespace My.Functions
             
             var message = await req.ReadAsStringAsync();
             //Deserialize
+            leaderboardRow leaderboardInput = JsonConvert.DeserializeObject<leaderboardRow>(message);
+            Console.WriteLine(leaderboardInput.player);
+            Console.WriteLine(leaderboardInput.score);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
@@ -46,12 +50,12 @@ namespace My.Functions
             };
         }
     }
-
+    //Get value
     public static class GetItems
     {
         [Function("GetItems")]
         public static IActionResult Run(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "getitems")]
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetItems")]
             HttpRequest req,
             [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[ToDo]",
                 commandType: System.Data.CommandType.Text,
@@ -63,6 +67,7 @@ namespace My.Functions
         }
     }
 
+    //from tutorial
     public class ToDoItem
     {
         public Guid Id { get; set; }
@@ -72,11 +77,19 @@ namespace My.Functions
         public bool? completed { get; set; }
     }
 
+    //consistent
     public class OutputType
     {
         [SqlOutput("dbo.ToDo", connectionStringSetting: "SqlConnectionString")]
         public ToDoItem ToDoItem { get; set; }
         public HttpResponseData HttpResponse { get; set; }
+    }
+
+    //custom
+    public class leaderboardRow
+    {
+        public string player { get; set; }
+        public int score { get; set; }
     }
 }
 
