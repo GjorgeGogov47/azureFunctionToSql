@@ -29,8 +29,6 @@ namespace My.Functions
             var message = await req.ReadAsStringAsync();
             //Deserialize
             leaderboardRow leaderboardInput = JsonConvert.DeserializeObject<leaderboardRow>(message);
-            Console.WriteLine(leaderboardInput.player);
-            Console.WriteLine(leaderboardInput.score);
 
             var response = req.CreateResponse(HttpStatusCode.OK);
             response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
@@ -39,12 +37,11 @@ namespace My.Functions
             // Return a response to both HTTP trigger and Azure SQL output binding.
             return new OutputType()
             {
-                ToDoItem = new ToDoItem
+                leaderboardRow = new leaderboardRow
                 {
-                    Id = Guid.NewGuid(),
-                    title = message,
-                    completed = false,
-                    url = ""
+                    playerName = leaderboardInput.playerName,
+                    playerScore = leaderboardInput.playerScore,
+                    lastUpdated = DateTime.Now
                 },
                 HttpResponse = response
             };
@@ -57,39 +54,30 @@ namespace My.Functions
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetItems")]
             HttpRequest req,
-            [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[ToDo]",
+            [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[leaderBoard]",
                 commandType: System.Data.CommandType.Text,
                 parameters: "",
                 connectionStringSetting: "SqlConnectionString")]
-            IEnumerable<ToDoItem> toDoItem)
+            IEnumerable<leaderboardRow> leaderboardRow)
         {
-            return new OkObjectResult(toDoItem);
+            return new OkObjectResult(leaderboardRow);
         }
-    }
-
-    //from tutorial
-    public class ToDoItem
-    {
-        public Guid Id { get; set; }
-        public int? order { get; set; }
-        public string title { get; set; }
-        public string url { get; set; }
-        public bool? completed { get; set; }
     }
 
     //consistent
     public class OutputType
     {
-        [SqlOutput("dbo.ToDo", connectionStringSetting: "SqlConnectionString")]
-        public ToDoItem ToDoItem { get; set; }
+        [SqlOutput("dbo.leaderBoard", connectionStringSetting: "SqlConnectionString")]
+        public leaderboardRow leaderboardRow { get; set; }
         public HttpResponseData HttpResponse { get; set; }
     }
 
     //custom
     public class leaderboardRow
     {
-        public string player { get; set; }
-        public int score { get; set; }
+        public string playerName { get; set; }
+        public int playerScore { get; set; }
+        public DateTime lastUpdated { get; set; }
     }
 }
 
