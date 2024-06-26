@@ -54,7 +54,7 @@ namespace My.Functions
         public static IActionResult Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetItems")]
             HttpRequest req,
-            [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[leaderBoard]",
+            [SqlInput(commandText: "SELECT TOP (1000) * FROM [dbo].[leaderBoard] ORDER BY [playerScore] DESC",
                 commandType: System.Data.CommandType.Text,
                 parameters: "",
                 connectionStringSetting: "SqlConnectionString")]
