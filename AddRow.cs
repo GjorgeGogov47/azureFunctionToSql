@@ -23,28 +23,31 @@ namespace My.Functions
         public async Task<OutputType> Run([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route="AddRow")] HttpRequestData req,
     FunctionContext executionContext)
         {
-            var logger = executionContext.GetLogger("AddRow");
-            logger.LogInformation("C# HTTP trigger function processed a request.");
-            
-            var message = await req.ReadAsStringAsync();
-            //Deserialize
-            leaderboardRow leaderboardInput = JsonConvert.DeserializeObject<leaderboardRow>(message);
-
-            var response = req.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
-            await response.WriteStringAsync("Success");
-
-            // Return a response to both HTTP trigger and Azure SQL output binding.
-            return new OutputType()
+            while(true)
             {
-                leaderboardRow = new leaderboardRow
+                var logger = executionContext.GetLogger("AddRow");
+                logger.LogInformation("C# HTTP trigger function processed a request.");
+                
+                var message = await req.ReadAsStringAsync();
+                //Deserialize
+                leaderboardRow leaderboardInput = JsonConvert.DeserializeObject<leaderboardRow>(message);
+
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", "text/plain; charset=utf-8");
+                await response.WriteStringAsync("Success");
+
+                // Return a response to both HTTP trigger and Azure SQL output binding.
+                return new OutputType()
                 {
-                    playerName = leaderboardInput.playerName,
-                    playerScore = leaderboardInput.playerScore,
-                    lastUpdated = DateTime.Now
-                },
-                HttpResponse = response
-            };
+                    leaderboardRow = new leaderboardRow
+                    {
+                        playerName = leaderboardInput.playerName,
+                        playerScore = leaderboardInput.playerScore,
+                        lastUpdated = DateTime.Now
+                    },
+                    HttpResponse = response
+                };
+            }
         }
     }
     //Get value
